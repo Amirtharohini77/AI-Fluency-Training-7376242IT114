@@ -1,7 +1,6 @@
-"""Day 4: estimate the memory a model needs, and whether it fits your machine."""
+"""Day 4 assessment: model memory estimator."""
 
 
-# Approximate bytes per parameter
 BYTES_PER_PARAM = {
     "FP16": 2.00,
     "Q8_0": 1.00,
@@ -12,46 +11,29 @@ BYTES_PER_PARAM = {
 }
 
 
-# Approximate KV-cache cost
 KV_GB_PER_B_PER_1K = 0.02
-
-
-# Runtime overhead
 OVERHEAD = 1.10
 
 
-def estimate(
-    params_b,
-    precision="Q4_K_M",
-    context_k=8
-):
-    """Return weights, KV cache and total memory in GB."""
-
+def estimate(params_b, precision, context_k):
     if precision not in BYTES_PER_PARAM:
         raise ValueError(
-            f"Unknown precision {precision}. "
-            f"Choose from {list(BYTES_PER_PARAM)}"
+            f"Unknown precision: {precision}"
         )
 
-    weights_gb = (
-        params_b * BYTES_PER_PARAM[precision]
-    )
+    weights = params_b * BYTES_PER_PARAM[precision]
 
-    kv_gb = (
+    kv_cache = (
         params_b
         * context_k
         * KV_GB_PER_B_PER_1K
     )
 
-    total_gb = (
-        weights_gb + kv_gb
+    total = (
+        weights + kv_cache
     ) * OVERHEAD
 
-    return (
-        weights_gb,
-        kv_gb,
-        total_gb
-    )
+    return weights, kv_cache, total
 
 
 def verdict(total_gb, available_gb):
@@ -80,26 +62,26 @@ def report(
     )
 
     print(
-        f"{name:<22} "
-        f"{precision:<7} "
+        f"{name:<20} "
         f"{params_b:>5.1f}B "
-        f"ctx {context_k:>3}K "
-        f"weights {weights:>6.2f} GB "
-        f"kv {kv:>5.2f} GB "
-        f"total {total:>6.2f} GB "
+        f"{precision:<7} "
+        f"{context_k:>4}K "
+        f"weights={weights:>6.2f}GB "
+        f"KV={kv:>5.2f}GB "
+        f"total={total:>6.2f}GB "
         f"-> {verdict(total, available_gb)}"
     )
 
 
 if __name__ == "__main__":
 
-    # Change this to your actual RAM/VRAM
-    AVAILABLE_GB = 8.0
+    AVAILABLE_GB = 16.0  # CHANGE TO YOUR REAL VALUE
 
     print(
-        f"Memory available: {AVAILABLE_GB} GB\n"
+        f"Available memory: {AVAILABLE_GB} GB\n"
     )
 
+    # At least four configurations
     report(
         "Qwen small",
         1.5,
@@ -109,7 +91,7 @@ if __name__ == "__main__":
     )
 
     report(
-        "Granite / Qwen mid",
+        "8B Q4",
         8.0,
         "Q4_K_M",
         8,
@@ -117,7 +99,7 @@ if __name__ == "__main__":
     )
 
     report(
-        "Mid at FP16",
+        "8B FP16",
         8.0,
         "FP16",
         8,
@@ -125,16 +107,8 @@ if __name__ == "__main__":
     )
 
     report(
-        "Large local",
-        30.0,
-        "Q4_K_M",
-        8,
-        AVAILABLE_GB
-    )
-
-    report(
-        "Server class",
-        70.0,
+        "14B Q4",
+        14.0,
         "Q4_K_M",
         8,
         AVAILABLE_GB
@@ -142,27 +116,27 @@ if __name__ == "__main__":
 
 
     print(
-        "\nSame 8B model, different context lengths:"
+        "\nContext experiment: 8B Q4"
     )
 
-    for context_k in (
+    for context in (
         4,
         8,
-        32,
-        128
+        16,
+        32
     ):
 
         report(
-            "8B agent",
+            "8B Q4",
             8.0,
             "Q4_K_M",
-            context_k,
+            context,
             AVAILABLE_GB
         )
 
 
     print(
-        "\nSame 8B model, different quantizations:"
+        "\nQuantization experiment: 8B at 8K"
     )
 
     for precision in (
@@ -174,7 +148,7 @@ if __name__ == "__main__":
     ):
 
         report(
-            "8B agent",
+            "8B",
             8.0,
             precision,
             8,

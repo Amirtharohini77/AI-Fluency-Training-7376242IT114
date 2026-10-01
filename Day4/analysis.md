@@ -1,4 +1,14 @@
 # Day 4 — Model Memory, Quantization and Licensing
+## Scenario
+
+I want to run an open model locally as a study assistant on my laptop.
+The model will answer questions, summarize notes, and support simple
+agent/tool-calling tasks.
+
+Memory budget: [YOUR ACTUAL RAM/VRAM] GB
+Target context: 8K tokens
+Primary user: Myself
+Use: Personal academic project
 
 ## 1. Memory Formula
 
